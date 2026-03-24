@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Tracker Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234f8ef7'/><text y='.9em' font-size='70' x='12'>🎯</text></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== CSS Variables ===== */
+    :root[data-theme="dark"] {
+      --bg: #0d0f14;
+      --surface: #161a22;
+      --surface2: #1e2330;
+      --border: #2a3045;
+      --text: #e8ecf4;
+      --text-muted: #6b7492;
+      --accent: #4f8ef7;
+      --accent2: #7c5ff5;
+      --green: #22c97a;
+      --yellow: #f5c842;
+      --red: #f25c5c;
+      --shadow: 0 4px 24px rgba(0,0,0,0.45);
+      --card-hover: #1e2330;
+    }
+    :root[data-theme="light"] {
+      --bg: #f0f2f8;
+      --surface: #ffffff;
+      --surface2: #e8ecf7;
+      --border: #d0d6e8;
+      --text: #1a1e2e;
+      --text-muted: #7a82a0;
+      --accent: #3b7df5;
+      --accent2: #6b48e8;
+      --green: #18a262;
+      --yellow: #d4a017;
+      --red: #d94040;
+      --shadow: 0 4px 20px rgba(0,0,0,0.10);
+      --card-hover: #f5f7ff;
+    }
+
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      transition: background 0.3s, color 0.3s;
+    }
+    h1, h2, h3, .heading { font-family: 'Syne', sans-serif; }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ===== Layout ===== */
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+
+    /* ===== Topbar ===== */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .topbar-inner {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .brand h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .brand span { color: var(--accent); }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+    .btn-icon {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ===== Main ===== */
+    .main { padding: 24px 0 60px; }
+
+    /* ===== Stats ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+    .stat-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .stat-icon.blue { background: rgba(79,142,247,0.15); }
+    .stat-icon.purple { background: rgba(124,95,245,0.15); }
+    .stat-icon.yellow { background: rgba(245,200,66,0.15); }
+    .stat-icon.green { background: rgba(34,201,122,0.15); }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 2px; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; font-family: 'Syne', sans-serif; line-height: 1; }
+
+    /* ===== Alerts ===== */
+    .alerts-section { margin-bottom: 24px; }
+    .alerts-section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .alerts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .alert-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .alert-card.red { border-left-color: var(--red); }
+    .alert-card.yellow { border-left-color: var(--yellow); }
+    .alert-card .alert-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    .alert-card .alert-item {
+      font-size: 12px; color: var(--text-muted);
+      padding: 3px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;
+    }
+    .alert-card .alert-item:last-child { border-bottom: none; }
+    .alert-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 20px;
+    }
+    .alert-badge.red { background: rgba(242,92,92,0.15); color: var(--red); }
+    .alert-badge.yellow { background: rgba(245,200,66,0.15); color: var(--yellow); }
+    .empty-alert { font-size: 12px; color: var(--text-muted); text-align: center; padding: 10px 0; }
+
+    /* ===== Toolbar ===== */
+    .toolbar {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .search-box {
+      flex: 1; min-width: 200px;
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px; padding: 8px 12px;
+    }
+    .search-box input {
+      border: none; background: transparent; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; width: 100%; outline: none;
+    }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .filter-tabs { display: flex; gap: 6px; }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 7px 13px; border-radius: 8px;
+      cursor: pointer; font-size: 12px; font-weight: 500;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; color: #fff;
+      padding: 8px 16px; border-radius: 9px;
+      cursor: pointer; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap; font-family: 'DM Sans', sans-serif;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ===== Exam Table ===== */
+    .exams-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .exams-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .exams-table thead th {
+      background: var(--surface2);
+      padding: 11px 14px;
+      text-align: left; font-size: 11px; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    .exams-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .exams-table tbody tr:last-child { border-bottom: none; }
+    .exams-table tbody tr:hover { background: var(--card-hover); }
+    .exams-table td {
+      padding: 12px 14px; font-size: 13px; vertical-align: middle;
+    }
+    .exam-name-cell { font-weight: 600; }
+    .exam-name-cell .countdown {
+      font-size: 10px; font-weight: 500;
+      color: var(--text-muted); margin-top: 2px;
+    }
+    .exam-name-cell .countdown.urgent { color: var(--red); }
+    .exam-name-cell .countdown.soon { color: var(--yellow); }
+    .badge {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px;
+    }
+    .badge.applied     { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .badge.admit       { background: rgba(124,95,245,0.15); color: var(--accent2); }
+    .badge.exam-done   { background: rgba(245,200,66,0.15); color: var(--yellow); }
+    .badge.result-pending { background: rgba(245,92,92,0.15); color: var(--red); }
+    .badge.completed   { background: rgba(34,201,122,0.15); color: var(--green); }
+    .row-urgency-red td:first-child { border-left: 3px solid var(--red); }
+    .row-urgency-yellow td:first-child { border-left: 3px solid var(--yellow); }
+    .row-urgency-green td:first-child { border-left: 3px solid var(--green); }
+    .row-urgency-none td:first-child { border-left: 3px solid transparent; }
+    .action-btns { display: flex; gap: 6px; }
+    .btn-sm {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-muted); padding: 5px 9px;
+      border-radius: 6px; cursor: pointer; font-size: 12px;
+      transition: all 0.15s;
+    }
+    .btn-sm:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-sm.del:hover { background: var(--red); border-color: var(--red); color: #fff; }
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+    .empty-state p { font-size: 14px; }
+    .date-cell { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .notes-cell { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-muted); }
+
+    /* ===== Modal ===== */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 28px 24px;
+      width: 100%; max-width: 580px;
+      max-height: 90vh; overflow-y: auto;
+      animation: slideUp 0.25s ease;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header h2 { font-size: 1.1rem; font-weight: 800; }
+    .modal-close { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .form-group input, .form-group select, .form-group textarea {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 9px 11px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--accent);
+    }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+    .form-group select option { background: var(--surface); }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+    .btn-secondary {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 8px 18px; border-radius: 9px;
+      cursor: pointer; font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ===== Export/Import bar ===== */
+    .data-actions {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .data-actions span { font-size: 12px; color: var(--text-muted); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px; border-radius: 8px;
+      cursor: pointer; font-size: 12px; font-weight: 500;
+      display: flex; align-items: center; gap: 5px;
+      transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: var(--shadow);
+      opacity: 0; transform: translateY(10px);
+      transition: all 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { border-left-color: var(--red); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .alerts-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+      .exams-table thead th:nth-child(n+5),
+      .exams-table tbody td:nth-child(n+5) { display: none; }
+      .filter-tabs { display: none; }
+      .brand h1 { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Topbar ===== -->
+  <header class="topbar">
+    <div class="container">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-icon">🎯</div>
+          <h1>Exam<span> Tracker</span></h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-icon" id="themeToggle" title="Toggle Theme">🌙</button>
+          <button class="btn-primary" id="openAddModal">+ Add Exam</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Main ===== -->
+  <main class="main">
+    <div class="container">
+
+      <!-- Stats -->
+      <section class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div><div class="stat-label">Total Exams</div><div class="stat-value" id="statTotal">0</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">📅</div>
+          <div><div class="stat-label">Upcoming</div><div class="stat-value" id="statUpcoming">0</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">⏳</div>
+          <div><div class="stat-label">Result Pending</div><div class="stat-value" id="statPending">0</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div><div class="stat-label">Completed</div><div class="stat-value" id="statCompleted">0</div></div>
+        </div>
+      </section>
+
+      <!-- Alerts -->
+      <section class="alerts-section">
+        <h2>⚡ Important Alerts</h2>
+        <div class="alerts-grid">
+          <div class="alert-card red">
+            <div class="alert-title">🔴 Deadlines in Next 3 Days</div>
+            <div id="deadlineAlerts"><div class="empty-alert">No urgent deadlines</div></div>
+          </div>
+          <div class="alert-card yellow">
+            <div class="alert-title">🟡 Exams in Next 7 Days</div>
+            <div id="examAlerts"><div class="empty-alert">No upcoming exams this week</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Actions -->
+      <div class="data-actions">
+        <span>Data:</span>
+        <button class="btn-outline" id="exportBtn">⬆ Export JSON</button>
+        <button class="btn-outline" id="importTrigger">⬇ Import JSON</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" />
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="searchInput" placeholder="Search exams..." />
+        </div>
+        <div class="filter-tabs">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+          <button class="filter-btn" data-filter="result-pending">Results Pending</button>
+          <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+      </div>
+
+      <!-- Exams Table -->
+      <div class="exams-table-wrap">
+        <table class="exams-table">
+          <thead>
+            <tr>
+              <th>Exam Name</th>
+              <th>Status</th>
+              <th>Last Date</th>
+              <th>Exam Date</th>
+              <th>Result Date</th>
+              <th>Reg. No.</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="examsBody">
+            <!-- Rows rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ===== Add/Edit Modal ===== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add New Exam</h2>
+        <button class="modal-close" id="closeModal">✕</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Exam Name *</label>
+          <input type="text" id="fName" placeholder="e.g. SSC CGL 2025" />
+        </div>
+        <div class="form-group">
+          <label>Application Date</label>
+          <input type="date" id="fAppDate" />
+        </div>
+        <div class="form-group">
+          <label>Last Date to Apply</label>
+          <input type="date" id="fLastDate" />
+        </div>
+        <div class="form-group">
+          <label>Exam Date</label>
+          <input type="date" id="fExamDate" />
+        </div>
+        <div class="form-group">
+          <label>Result Date</label>
+          <input type="date" id="fResultDate" />
+        </div>
+        <div class="form-group">
+          <label>Registration Number</label>
+          <input type="text" id="fRegNo" placeholder="Registration / Roll No." />
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="fStatus">
+            <option value="Applied">Applied</option>
+            <option value="Admit Card">Admit Card</option>
+            <option value="Exam Done">Exam Done</option>
+            <option value="Result Pending">Result Pending</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="fNotes" placeholder="Any notes about this exam..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelModal">Cancel</button>
+        <button class="btn-primary" id="saveExam">Save Exam</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===== State =====
+    let exams = JSON.parse(localStorage.getItem('examTrackerData') || '[]');
+    let editingId = null;
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    // ===== Utilities =====
+    const $ = id => document.getElementById(id);
+    const today = () => new Date().toISOString().split('T')[0];
+
+    function daysUntil(dateStr) {
+      if (!dateStr) return null;
+      const diff = new Date(dateStr) - new Date(today());
+      return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    }
+
+    function formatDate(d) {
+      if (!d) return '—';
+      const parts = d.split('-');
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${parts[2]} ${months[parseInt(parts[1])-1]} ${parts[0]}`;
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    function save() {
+      localStorage.setItem('examTrackerData', JSON.stringify(exams));
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (type === 'error' ? ' error' : '');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.className = 'toast'; }, 3000);
+    }
+
+    // ===== Stats =====
+    function renderStats() {
+      $('statTotal').textContent = exams.length;
+      $('statUpcoming').textContent = exams.filter(e =>
+        ['Applied', 'Admit Card'].includes(e.status)
+      ).length;
+      $('statPending').textContent = exams.filter(e =>
+        e.status === 'Result Pending'
+      ).length;
+      $('statCompleted').textContent = exams.filter(e =>
+        e.status === 'Completed'
+      ).length;
+    }
+
+    // ===== Alerts =====
+    function renderAlerts() {
+      // Deadline alerts (last date within 3 days)
+      const deadlines = exams.filter(e => {
+        if (!e.lastDate) return false;
+        const d = daysUntil(e.lastDate);
+        return d !== null && d >= 0 && d <= 3;
+      });
+
+      const deadlineEl = $('deadlineAlerts');
+      if (deadlines.length === 0) {
+        deadlineEl.innerHTML = '<div class="empty-alert">No urgent deadlines 🎉</div>';
+      } else {
+        deadlineEl.innerHTML = deadlines.map(e => {
+          const d = daysUntil(e.lastDate);
+          const label = d === 0 ? 'Today!' : d === 1 ? '1 day left' : `${d} days left`;
+          return `<div class="alert-item"><span>${e.name}</span><span class="alert-badge red">${label}</span></div>`;
+        }).join('');
+      }
+
+      // Exam alerts (exam date within 7 days)
+      const upcoming = exams.filter(e => {
+        if (!e.examDate) return false;
+        const d = daysUntil(e.examDate);
+        return d !== null && d >= 0 && d <= 7;
+      });
+
+      const examEl = $('examAlerts');
+      if (upcoming.length === 0) {
+        examEl.innerHTML = '<div class="empty-alert">No exams this week 🎉</div>';
+      } else {
+        examEl.innerHTML = upcoming.map(e => {
+          const d = daysUntil(e.examDate);
+          const label = d === 0 ? 'Today!' : d === 1 ? 'Tomorrow' : `${d} days`;
+          return `<div class="alert-item"><span>${e.name}</span><span class="alert-badge yellow">${label}</span></div>`;
+        }).join('');
+      }
+    }
+
+    // ===== Status Badge =====
+    function statusBadge(status) {
+      const map = {
+        'Applied': 'applied',
+        'Admit Card': 'admit',
+        'Exam Done': 'exam-done',
+        'Result Pending': 'result-pending',
+        'Completed': 'completed',
+      };
+      return `<span class="badge ${map[status] || 'applied'}">${status}</span>`;
+    }
+
+    // ===== Row Urgency =====
+    function rowUrgency(exam) {
+      if (exam.status === 'Completed') return 'row-urgency-green';
+      const ld = exam.lastDate ? daysUntil(exam.lastDate) : null;
+      const ed = exam.examDate ? daysUntil(exam.examDate) : null;
+      if ((ld !== null && ld >= 0 && ld <= 3)) return 'row-urgency-red';
+      if ((ed !== null && ed >= 0 && ed <= 7)) return 'row-urgency-yellow';
+      return 'row-urgency-none';
+    }
+
+    // ===== Countdown =====
+    function countdownText(exam) {
+      if (exam.status === 'Completed') return '';
+      if (exam.examDate) {
+        const d = daysUntil(exam.examDate);
+        if (d !== null && d >= 0) {
+          const cls = d <= 1 ? 'urgent' : d <= 7 ? 'soon' : '';
+          const label = d === 0 ? 'Exam today!' : d === 1 ? 'Exam tomorrow' : `Exam in ${d} days`;
+          return `<div class="countdown ${cls}">⏰ ${label}</div>`;
+        }
+      }
+      if (exam.lastDate) {
+        const d = daysUntil(exam.lastDate);
+        if (d !== null && d >= 0 && d <= 7) {
+          const cls = d <= 3 ? 'urgent' : 'soon';
+          const label = d === 0 ? 'Last date today!' : d === 1 ? 'Last date tomorrow' : `${d} days to apply`;
+          return `<div class="countdown ${cls}">📅 ${label}</div>`;
+        }
+      }
+      return '';
+    }
+
+    // ===== Filter Logic =====
+    function getFilteredExams() {
+      let list = [...exams];
+      // Search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        list = list.filter(e => e.name.toLowerCase().includes(q));
+      }
+      // Filter
+      if (currentFilter === 'upcoming') {
+        list = list.filter(e => ['Applied', 'Admit Card', 'Exam Done'].includes(e.status));
+      } else if (currentFilter === 'result-pending') {
+        list = list.filter(e => e.status === 'Result Pending');
+      } else if (currentFilter === 'completed') {
+        list = list.filter(e => e.status === 'Completed');
+      }
+      return list;
+    }
+
+    // ===== Render Table =====
+    function renderTable() {
+      const filtered = getFilteredExams();
+      const tbody = $('examsBody');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr><td colspan="8">
+            <div class="empty-state">
+              <div class="icon">📭</div>
+              <p>${exams.length === 0 ? 'No exams added yet. Click "+ Add Exam" to start!' : 'No exams match your filter.'}</p>
+            </div>
+          </td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(exam => `
+        <tr class="${rowUrgency(exam)}">
+          <td class="exam-name-cell">
+            ${exam.name}
+            ${countdownText(exam)}
+          </td>
+          <td>${statusBadge(exam.status)}</td>
+          <td class="date-cell">${formatDate(exam.lastDate)}</td>
+          <td class="date-cell">${formatDate(exam.examDate)}</td>
+          <td class="date-cell">${formatDate(exam.resultDate)}</td>
+          <td class="date-cell">${exam.regNo || '—'}</td>
+          <td class="notes-cell" title="${exam.notes || ''}">${exam.notes || '—'}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-sm" onclick="openEdit('${exam.id}')">✏️</button>
+              <button class="btn-sm del" onclick="deleteExam('${exam.id}')">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ===== Full Render =====
+    function render() {
+      renderStats();
+      renderAlerts();
+      renderTable();
+    }
+
+    // ===== Modal =====
+    function openModal() {
+      $('modalOverlay').classList.add('open');
+    }
+    function closeModal() {
+      $('modalOverlay').classList.remove('open');
+      resetForm();
+      editingId = null;
+    }
+    function resetForm() {
+      ['fName','fAppDate','fLastDate','fExamDate','fResultDate','fRegNo','fNotes'].forEach(id => $( id ).value = '');
+      $('fStatus').value = 'Applied';
+      $('modalTitle').textContent = 'Add New Exam';
+      $('saveExam').textContent = 'Save Exam';
+    }
+
+    // ===== Auto-suggest Status =====
+    function autoStatus(exam) {
+      const t = today();
+      if (exam.resultDate && exam.resultDate <= t) return 'Completed';
+      if (exam.examDate && exam.examDate < t) return 'Result Pending';
+      if (exam.examDate && exam.examDate === t) return 'Exam Done';
+      return exam.status || 'Applied';
+    }
+
+    // ===== Save Exam =====
+    $('saveExam').addEventListener('click', () => {
+      const name = $('fName').value.trim();
+      if (!name) { showToast('Exam name is required!', 'error'); return; }
+
+      const examData = {
+        id: editingId || uid(),
+        name,
+        appDate: $('fAppDate').value,
+        lastDate: $('fLastDate').value,
+        examDate: $('fExamDate').value,
+        resultDate: $('fResultDate').value,
+        regNo: $('fRegNo').value.trim(),
+        status: $('fStatus').value,
+        notes: $('fNotes').value.trim(),
+      };
+
+      if (editingId) {
+        const idx = exams.findIndex(e => e.id === editingId);
+        exams[idx] = examData;
+        showToast('Exam updated successfully!');
+      } else {
+        exams.push(examData);
+        showToast('Exam added successfully!');
+      }
+
+      save();
+      closeModal();
+      render();
+    });
+
+    // ===== Edit Exam =====
+    function openEdit(id) {
+      const exam = exams.find(e => e.id === id);
+      if (!exam) return;
+      editingId = id;
+      $('fName').value = exam.name;
+      $('fAppDate').value = exam.appDate || '';
+      $('fLastDate').value = exam.lastDate || '';
+      $('fExamDate').value = exam.examDate || '';
+      $('fResultDate').value = exam.resultDate || '';
+      $('fRegNo').value = exam.regNo || '';
+      $('fStatus').value = exam.status;
+      $('fNotes').value = exam.notes || '';
+      $('modalTitle').textContent = 'Edit Exam';
+      $('saveExam').textContent = 'Update Exam';
+      openModal();
+    }
+
+    // ===== Delete Exam =====
+    function deleteExam(id) {
+      if (!confirm('Delete this exam?')) return;
+      exams = exams.filter(e => e.id !== id);
+      save();
+      render();
+      showToast('Exam deleted.');
+    }
+
+    // ===== Export =====
+    $('exportBtn').addEventListener('click', () => {
+      if (exams.length === 0) { showToast('No data to export!', 'error'); return; }
+      const blob = new Blob([JSON.stringify(exams, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `exam-tracker-${today()}.json`;
+      a.click();
+      showToast('Data exported!');
+    });
+
+    // ===== Import =====
+    $('importTrigger').addEventListener('click', () => $('importFile').click());
+    $('importFile').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!Array.isArray(data)) throw new Error('Invalid format');
+          exams = data;
+          save();
+          render();
+          showToast(`Imported ${data.length} exams!`);
+        } catch {
+          showToast('Invalid JSON file!', 'error');
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    // ===== Theme Toggle =====
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      $('themeToggle').textContent = theme === 'dark' ? '🌙' : '☀️';
+      localStorage.setItem('examTrackerTheme', theme);
+    }
+    $('themeToggle').addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+    // Load saved theme
+    const savedTheme = localStorage.getItem('examTrackerTheme') || 'dark';
+    applyTheme(savedTheme);
+
+    // ===== Filters =====
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        render();
+      });
+    });
+
+    // ===== Search =====
+    $('searchInput').addEventListener('input', e => {
+      searchQuery = e.target.value;
+      render();
+    });
+
+    // ===== Modal Events =====
+    $('openAddModal').addEventListener('click', () => { resetForm(); openModal(); });
+    $('closeModal').addEventListener('click', closeModal);
+    $('cancelModal').addEventListener('click', closeModal);
+    $('modalOverlay').addEventListener('click', e => { if (e.target === $('modalOverlay')) closeModal(); });
+
+    // ===== Init =====
+    render();
+
+    // Auto-refresh countdowns every 60 seconds
+    setInterval(render, 60000);
+  </script>
+</body>
+</html>
